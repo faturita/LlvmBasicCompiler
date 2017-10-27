@@ -2,26 +2,33 @@
 #include "codegen.h"
 #include "parser.hpp"
 
+/**
+	Esta clase tiene un codigo basico para que utilizando las librerias de LLVM
+	genera codigo intermedio de IR que se puede utilizar finalmente para generar
+	codigo binario (opera como un assembler generico)
+
+	**/
+
 using namespace std;
 
 /* Compile the AST into a module */
 void CodeGenContext::generateCode(NBlock& root)
 {
 	std::cout << "Generating code...\n";
-	
+
 	/* Create the top level interpreter function to call as entry */
 	vector<Type*> argTypes;
 	FunctionType *ftype = FunctionType::get(Type::getVoidTy(MyContext), makeArrayRef(argTypes), false);
 	mainFunction = Function::Create(ftype, GlobalValue::InternalLinkage, "main", module);
 	BasicBlock *bblock = BasicBlock::Create(MyContext, "entry", mainFunction, 0);
-	
+
 	/* Push a new variable/block context */
 	pushBlock(bblock);
 	root.codeGen(*this); /* emit bytecode for the toplevel block */
 	ReturnInst::Create(MyContext, bblock);
 	popBlock();
-	
-	/* Print the bytecode in a human-readable format 
+
+	/* Print the bytecode in a human-readable format
 	   to see if our program compiled properly
 	 */
 	std::cout << "Code is generated.\n";
@@ -44,7 +51,7 @@ GenericValue CodeGenContext::runCode() {
 }
 
 /* Returns an LLVM type based on the identifier */
-static Type *typeOf(const NIdentifier& type) 
+static Type *typeOf(const NIdentifier& type)
 {
 	if (type.name.compare("int") == 0) {
 		return Type::getInt64Ty(MyContext);
@@ -104,13 +111,13 @@ Value* NBinaryOperator::codeGen(CodeGenContext& context)
 		case TMINUS: 	instr = Instruction::Sub; goto math;
 		case TMUL: 		instr = Instruction::Mul; goto math;
 		case TDIV: 		instr = Instruction::SDiv; goto math;
-				
+
 		/* TODO comparison */
 	}
 
 	return NULL;
 math:
-	return BinaryOperator::Create(instr, lhs.codeGen(context), 
+	return BinaryOperator::Create(instr, lhs.codeGen(context),
 		rhs.codeGen(context), "", context.currentBlock());
 }
 
@@ -192,12 +199,12 @@ Value* NFunctionDeclaration::codeGen(CodeGenContext& context)
 
 	for (it = arguments.begin(); it != arguments.end(); it++) {
 		(**it).codeGen(context);
-		
+
 		argumentValue = &*argsValues++;
 		argumentValue->setName((*it)->id.name.c_str());
 		StoreInst *inst = new StoreInst(argumentValue, context.locals()[(*it)->id.name], false, bblock);
 	}
-	
+
 	block.codeGen(context);
 	ReturnInst::Create(MyContext, context.getCurrentReturnValue(), bblock);
 

@@ -11,6 +11,11 @@ typedef std::vector<NStatement*> StatementList;
 typedef std::vector<NExpression*> ExpressionList;
 typedef std::vector<NVariableDeclaration*> VariableList;
 
+/*
+	Estructura para dar soporte al AST, el Abstract Syntax Tree
+
+	**/
+	
 class Node {
 public:
 	virtual ~Node() {}
@@ -68,7 +73,7 @@ class NAssignment : public NExpression {
 public:
 	NIdentifier& lhs;
 	NExpression& rhs;
-	NAssignment(NIdentifier& lhs, NExpression& rhs) : 
+	NAssignment(NIdentifier& lhs, NExpression& rhs) :
 		lhs(lhs), rhs(rhs) { }
 	virtual llvm::Value* codeGen(CodeGenContext& context);
 };
@@ -83,7 +88,7 @@ public:
 class NExpressionStatement : public NStatement {
 public:
 	NExpression& expression;
-	NExpressionStatement(NExpression& expression) : 
+	NExpressionStatement(NExpression& expression) :
 		expression(expression) { }
 	virtual llvm::Value* codeGen(CodeGenContext& context);
 };
@@ -91,7 +96,7 @@ public:
 class NReturnStatement : public NStatement {
 public:
 	NExpression& expression;
-	NReturnStatement(NExpression& expression) : 
+	NReturnStatement(NExpression& expression) :
 		expression(expression) { }
 	virtual llvm::Value* codeGen(CodeGenContext& context);
 };
@@ -125,7 +130,7 @@ public:
 	const NIdentifier& id;
 	VariableList arguments;
 	NBlock& block;
-	NFunctionDeclaration(const NIdentifier& type, const NIdentifier& id, 
+	NFunctionDeclaration(const NIdentifier& type, const NIdentifier& id,
 			const VariableList& arguments, NBlock& block) :
 		type(type), id(id), arguments(arguments), block(block) { }
 	virtual llvm::Value* codeGen(CodeGenContext& context);
